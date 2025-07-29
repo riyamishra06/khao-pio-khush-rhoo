@@ -2,13 +2,12 @@ import React from 'react';
 
 const FeatureShowcase = () => {
   return (
-    <div className="text-white space-y-4">
-      <h2 className="text-2xl font-bold">Why FitTrack?</h2>
-      <ul className="list-disc pl-5 text-green-300 space-y-2">
-        <li>Track your fitness goals effortlessly</li>
-        <li>Personalized workout and meal plans</li>
-        <li>Stay motivated with community support</li>
-      </ul>
+    <div className="p-4">
+      <img
+        src="https://i.pinimg.com/1200x/39/af/d7/39afd77693be6de29ca907da42d743a3.jpg"
+        alt="FitTrack Features"
+        className="rounded-lg shadow-lg object-cover w-full h-84 mb-6"
+      />
     </div>
   );
 };
