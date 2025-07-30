@@ -46,7 +46,7 @@ const Footer = () => {
 
         {/* COPYRIGHT SECTION */}
         <div className="border-t border-green-800 pt-8 text-center">
-          <p className="text-green-400">© 2024 FitTrack. All rights reserved.</p>
+          <p className="text-green-400">© {new Date().getFullYear()} FitTrack. All rights reserved.</p>
         </div>
       </div>
     </footer>

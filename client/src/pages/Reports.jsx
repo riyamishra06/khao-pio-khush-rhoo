@@ -119,8 +119,8 @@ const Reports = () => {
             {/* Current Month */}
             <div>
               <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
-                {weekDays.map(day => (
-                  <div key={day} className="text-center text-green-200 text-xs sm:text-sm font-medium py-2">
+                {weekDays.map((day, idx) => (
+                  <div key={idx} className="text-center text-green-200 text-xs sm:text-sm font-medium py-2">
                     {day}
                   </div>
                 ))}
@@ -146,8 +146,8 @@ const Reports = () => {
             {/* Next Month Preview */}
             <div>
               <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
-                {weekDays.map(day => (
-                  <div key={day} className="text-center text-green-200 text-xs sm:text-sm font-medium py-2">
+                {weekDays.map((day, idx) => (
+                  <div key={idx} className="text-center text-green-200 text-xs sm:text-sm font-medium py-2">
                     {day}
                   </div>
                 ))}
