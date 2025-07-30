@@ -14,8 +14,8 @@ const Features = () => {
     },
     {
       icon: <Users className="w-8 h-8" />,
-      title: "Community",
-      description: "Connect with other users, share your journey, and find motivation within the FitTrack community."
+      title: "MemberShip",
+      description: "Unlock premium features like personalized plans, expert tips, and exclusive access by becoming a member."
     }
   ];
 

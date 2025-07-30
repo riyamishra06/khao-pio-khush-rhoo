@@ -3,7 +3,7 @@ import React from 'react';
 const SocialLogin = () => {
   return (
     <div className="mt-4">
-      <p className="text-center text-gray-400">or continue with</p>
+      <p className="text-center text-gray-100">or continue with</p>
       <div className="flex justify-center mt-2 space-x-4 mb-4">
         <button className="bg-white border border-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition flex items-center">
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -21,7 +21,7 @@ const SocialLogin = () => {
           Facebook
         </button>
       </div>
-      <p className="text-center text-gray-600">If there is no account?</p>
+      <p className="text-center text-gray-100">If there is no account?</p>
       <button className="w-full bg-teal-500 text-white font-semibold py-2 rounded hover:bg-teal-600 transition">
         New account
       </button>

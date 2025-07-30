@@ -44,7 +44,7 @@ const Hero = () => {
               </button>
               <button
                 onClick={() => scrollToSection('pricing')}
-                className="bg-green-700 hover:bg-green-600 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-all transform hover:scale-105 shadow-lg"
+                className="bg-green-700 hover:bg-green-600 text-white px-6 py- sm:px-8 sm:py-4 rounded-full text-base sm:text-lg font-semibold transition-all transform hover:scale-105 shadow-lg"
               >
                 Pricing
               </button>
