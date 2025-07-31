@@ -1,5 +1,4 @@
-import { Dumbbell } from 'lucide-react';
-import logo from '../../assets/logo.png'; // ✅ Adjust path based on your folder
+import logo from '../../assets/logo.png'; 
 
 const Footer = () => {
   return (
