@@ -3,7 +3,7 @@ import expressLoader from "./src/loaders/express.js";
 import mongooseLoader from "./src/loaders/mongoose.js";
 
 (async () => {
-//   await mongooseLoader()
+  await mongooseLoader()
   const app = await expressLoader();
 
   app.listen(config.port, () => {
