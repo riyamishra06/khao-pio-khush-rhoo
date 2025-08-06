@@ -1,7 +1,7 @@
-export const zodError = (error) => {
-  var errors = [];
-  error.map((err) => {
-    errors.push({ message: err.message, path: err.path[0] });
-  });
+export const zodError = (zodIssues) => {
+  const errors = zodIssues.map((err) => ({
+    message: err.message,
+    path: err.path[0],
+  }));
   return errors;
 };
