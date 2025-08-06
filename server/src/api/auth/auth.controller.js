@@ -14,11 +14,11 @@ export const login = async (req, res) => {
 
   try {
     var result;
-    if (data.role === "Admin") {
+    if (data.role === "admin") {
       result = await authService.adminLogin(data);
     }
 
-    if (data.role === "User") {
+    if (data.role === "user") {
       result = await authService.agentLogin(data);
     }
 

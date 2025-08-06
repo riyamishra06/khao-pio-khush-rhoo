@@ -1,8 +1,8 @@
-import { MAdmin } from "../../models/admin.model.js";
+import { Madmin } from "../../models/admin.model.js";
 import { MUser } from "../../models/user.model.js";
 
 const adminLogin = async (data) => {
-  const admin = await MAdmin.findOne({
+  const admin = await Madmin.findOne({
     email: data.email,
     password: data.password,
   });
@@ -12,13 +12,13 @@ const adminLogin = async (data) => {
 
     if (token) {
       return {
-        message: "Admin logged in successfully",
-        role: "Admin",
+        message: "admin logged in successfully",
+        role: "admin",
         token,
       };
     }
   } else {
-    throw new Error("Admin credential are wrong");
+    throw new Error("admin credential are wrong");
   }
 };
 
@@ -38,7 +38,7 @@ const userLogin = async (data) => {
     if (token) {
       return {
         message: "User logged in successfully",
-        role: "User",
+        role: "user",
         token,
       };
     }
@@ -51,13 +51,13 @@ const verify = async (id, _role) => {
   var username = "";
   var role = "";
 
-  if (_role === "Admin") {
-    const result = await MAdmin.findById(id);
+  if (_role === "admin") {
+    const result = await Madmin.findById(id);
     username = result?.name;
-    role = "Admin";
+    role = "admin";
   }
 
-  if (_role === "User") {
+  if (_role === "user") {
     const result = await MUser.findById(id);
     username = result?.username;
     role = result?.role;
