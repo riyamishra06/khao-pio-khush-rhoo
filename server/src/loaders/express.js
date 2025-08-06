@@ -4,6 +4,8 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import cors from "cors";
 
+import authRouters from "../api/auth/auth.routes.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -24,6 +26,7 @@ export default async function expressLoader() {
   });
 
   /** @Routes */
+    app.use("/api/auth", authRouters);
 
   return app;
 }
