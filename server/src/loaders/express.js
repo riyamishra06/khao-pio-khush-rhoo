@@ -8,6 +8,9 @@ import { roleCheck } from "../middlewares/role.middleware.js";
 
 import authRouters from "../api/auth/auth.routes.js";
 import userRouters from "../api/user/user.routes.js";
+import foodRouters from "../api/foods/foods.routes.js";
+import nutritionRouters from "../api/nutrition/nutrition.routes.js";
+import adminRouters from "../api/admin/admin.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,6 +34,9 @@ export default async function expressLoader() {
   /** @Routes */
     app.use("/api/auth", authRouters);
     app.use("/api/users", userRouters);
+    app.use("/api/foods", foodRouters);
+    app.use("/api/nutrition", nutritionRouters);
+    app.use("/api/admin", adminRouters);
 
   return app;
 }

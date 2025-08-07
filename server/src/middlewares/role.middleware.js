@@ -1,20 +1,28 @@
 import httpCode from "http-status-codes";
-import { hasAccess } from "../utils/roleVerify.js";
 
-export const roleCheck = (req, res, next) => {
-  if (req.method === "GET") {
-    return next();
-  }
-  if (req.url.includes("/document")) {
-    return next();
-  }
+// Role-based access control middleware
+export const roleCheck = (allowedRoles) => {
+  return (req, res, next) => {
+    try {
+      const userRole = req.user?.role;
 
-  const route = req.baseUrl.split("api/")[1];
-  const role = req.user?.role;
+      if (!userRole) {
+        return res.status(httpCode.UNAUTHORIZED).send({
+          error: "User role not found"
+        });
+      }
 
-  if (hasAccess(route, role)) {
-    return next();
-  }
+      if (!allowedRoles.includes(userRole)) {
+        return res.status(httpCode.FORBIDDEN).send({
+          error: `Access denied. Required roles: ${allowedRoles.join(', ')}`
+        });
+      }
 
-  return res.status(httpCode.UNAUTHORIZED).send({ error: "Unauthorized Role" });
+      next();
+    } catch (error) {
+      return res.status(httpCode.INTERNAL_SERVER_ERROR).send({
+        error: "Role verification failed"
+      });
+    }
+  };
 };

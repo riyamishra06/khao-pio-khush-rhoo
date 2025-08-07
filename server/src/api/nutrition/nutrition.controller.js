@@ -134,9 +134,71 @@ const getNutritionStats = async (req, res) => {
     }
 
     // This will be implemented in the advanced features
-    return res.status(httpCode.NOT_IMPLEMENTED).send({ 
-      message: "Nutrition stats endpoint coming soon" 
+    return res.status(httpCode.NOT_IMPLEMENTED).send({
+      message: "Nutrition stats endpoint coming soon"
     });
+  } catch (error) {
+    return res.status(httpCode.BAD_REQUEST).send({ error: error.message });
+  }
+};
+
+// Get nutrition reports for date range
+const getNutritionReports = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(httpCode.UNAUTHORIZED).send({ error: "User not authenticated" });
+    }
+
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(httpCode.BAD_REQUEST).send({
+        error: "Start date and end date are required"
+      });
+    }
+
+    const reports = await nutritionService.getNutritionReports(userId, startDate, endDate);
+    return res.status(httpCode.OK).send(reports);
+  } catch (error) {
+    return res.status(httpCode.BAD_REQUEST).send({ error: error.message });
+  }
+};
+
+// Get chart data for visualization
+const getChartData = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(httpCode.UNAUTHORIZED).send({ error: "User not authenticated" });
+    }
+
+    const { startDate, endDate, chartType = 'daily' } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(httpCode.BAD_REQUEST).send({
+        error: "Start date and end date are required"
+      });
+    }
+
+    const chartData = await nutritionService.getChartData(userId, startDate, endDate, chartType);
+    return res.status(httpCode.OK).send(chartData);
+  } catch (error) {
+    return res.status(httpCode.BAD_REQUEST).send({ error: error.message });
+  }
+};
+
+// Get nutrition goals progress
+const getGoalsProgress = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(httpCode.UNAUTHORIZED).send({ error: "User not authenticated" });
+    }
+
+    const { date } = req.query;
+    const progress = await nutritionService.getGoalsProgress(userId, date);
+    return res.status(httpCode.OK).send(progress);
   } catch (error) {
     return res.status(httpCode.BAD_REQUEST).send({ error: error.message });
   }
@@ -149,5 +211,8 @@ export default {
   updateNutritionEntry,
   deleteNutritionEntry,
   getDailySummary,
-  getNutritionStats
+  getNutritionStats,
+  getNutritionReports,
+  getChartData,
+  getGoalsProgress
 };

@@ -17,6 +17,11 @@ router.delete("/:id", controller.deleteNutritionEntry);
 // Daily summary
 router.get("/summary/daily", controller.getDailySummary);
 
+// Reports and analytics
+router.get("/reports", controller.getNutritionReports);
+router.get("/charts", controller.getChartData);
+router.get("/goals/progress", controller.getGoalsProgress);
+
 // Nutrition statistics (coming soon)
 router.get("/stats/overview", controller.getNutritionStats);
 
