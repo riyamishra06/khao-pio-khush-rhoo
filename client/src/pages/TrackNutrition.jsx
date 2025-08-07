@@ -1,271 +1,274 @@
 import React, { useState } from 'react';
-import { Trash2, Edit3, Calendar } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, Filter } from 'lucide-react';
+import { useGetNutritionEntriesQuery, useDeleteNutritionEntryMutation } from '../store/api/nutritionApi';
+import { formatDateForAPI } from '../utils/api';
+import { toast } from 'react-hot-toast';
+import DailySummary from '../components/nutrition/DailySummary';
+import NutritionEntryForm from '../components/nutrition/NutritionEntryForm';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const TrackNutrition = () => {
-  const [formData, setFormData] = useState({
-    date: '',
-    foodItem: '',
-    quantity: '',
-    calories: '',
-    protein: '',
-    carbs: '',
-    fat: ''
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [mealTypeFilter, setMealTypeFilter] = useState('');
+
+  // API queries and mutations
+  const {
+    data: entriesData,
+    isLoading: isEntriesLoading,
+    error: entriesError,
+    refetch: refetchEntries,
+  } = useGetNutritionEntriesQuery({
+    startDate: selectedDate,
+    endDate: selectedDate,
+    mealType: mealTypeFilter || undefined,
   });
 
-  const [nutritionEntries, setNutritionEntries] = useState([
-    {
-      id: 1,
-      foodItem: 'Apple',
-      quantity: '150g',
-      calories: 78,
-      protein: 0.4,
-      carbs: 21,
-      fat: 0.2
-    },
-    {
-      id: 2,
-      foodItem: 'Chicken Breast',
-      quantity: '200g',
-      calories: 220,
-      protein: 40,
-      carbs: 0,
-      fat: 5
-    },
-    {
-      id: 3,
-      foodItem: 'Brown Rice',
-      quantity: '100g',
-      calories: 111,
-      protein: 2.6,
-      carbs: 23,
-      fat: 0.9
-    }
-  ]);
+  const [deleteEntry, { isLoading: isDeleting }] = useDeleteNutritionEntryMutation();
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
   };
 
-  const handleAdd = () => {
-    if (!formData.foodItem || !formData.quantity) {
-      alert('Please fill in at least Food Item and Quantity');
-      return;
+  const handleAddEntry = () => {
+    setShowAddForm(true);
+  };
+
+  const handleEditEntry = (entry) => {
+    setEditingEntry(entry);
+  };
+
+  const handleDeleteEntry = async (id) => {
+    if (window.confirm('Are you sure you want to delete this nutrition entry?')) {
+      try {
+        await deleteEntry(id).unwrap();
+        toast.success('Nutrition entry deleted successfully!');
+        refetchEntries();
+      } catch (error) {
+        toast.error('Failed to delete nutrition entry');
+      }
     }
+  };
 
-    const newEntry = {
-      id: Date.now(),
-      foodItem: formData.foodItem,
-      quantity: formData.quantity + (formData.quantity.includes('g') || formData.quantity.includes('ml') ? '' : 'g'),
-      calories: parseFloat(formData.calories) || 0,
-      protein: parseFloat(formData.protein) || 0,
-      carbs: parseFloat(formData.carbs) || 0,
-      fat: parseFloat(formData.fat) || 0
-    };
+  const handleFormSuccess = () => {
+    setShowAddForm(false);
+    setEditingEntry(null);
+    refetchEntries();
+  };
 
-    setNutritionEntries(prev => [...prev, newEntry]);
-    
-    // Reset form
-    setFormData({
-      date: formData.date, // Keep date selected
-      foodItem: '',
-      quantity: '',
-      calories: '',
-      protein: '',
-      carbs: '',
-      fat: ''
+  const handleFormClose = () => {
+    setShowAddForm(false);
+    setEditingEntry(null);
+  };
+
+  const formatMealTime = (createdAt) => {
+    return new Date(createdAt).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
-  const handleDelete = (id) => {
-    setNutritionEntries(prev => prev.filter(entry => entry.id !== id));
+  const getMealTypeColor = (mealType) => {
+    const colors = {
+      breakfast: 'bg-yellow-100 text-yellow-800',
+      lunch: 'bg-blue-100 text-blue-800',
+      dinner: 'bg-purple-100 text-purple-800',
+      snack: 'bg-green-100 text-green-800',
+    };
+    return colors[mealType] || 'bg-gray-100 text-gray-800';
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Daily Nutrition Tracking</h1>
-          <div className="w-20 h-1 bg-lime-400 rounded"></div>
-        </div>
+  const nutritionEntries = entriesData?.entries || [];
 
-        {/* Form Section */}
-        <div className="bg-green-800/50 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-green-700/50">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Date Field */}
-            <div className="lg:col-span-3">
-              <label className="block text-green-100 text-sm font-medium mb-3">
-                Date
-              </label>
-              <div className="relative">
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Nutrition Tracking</h1>
+              <p className="text-gray-600">Track your daily nutrition and monitor your progress</p>
+            </div>
+            <div className="mt-4 md:mt-0 flex items-center space-x-4">
+              {/* Date Selector */}
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-5 h-5 text-gray-500" />
                 <input
                   type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  className="w-full bg-green-700/50 border border-green-600 rounded-xl px-4 py-3 text-white placeholder-green-300 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all duration-200"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
-                <Calendar className="absolute right-3 top-3.5 h-5 w-5 text-green-300 pointer-events-none" />
               </div>
+              {/* Add Entry Button */}
+              <button
+                onClick={handleAddEntry}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Entry</span>
+              </button>
             </div>
-
-            {/* Food Item */}
-            <div className="lg:col-span-3">
-              <label className="block text-green-100 text-sm font-medium mb-3">
-                Food Item
-              </label>
-              <input
-                type="text"
-                name="foodItem"
-                value={formData.foodItem}
-                onChange={handleInputChange}
-                placeholder="Enter Food Item"
-                className="w-full bg-green-700/50 border border-green-600 rounded-xl px-4 py-3 text-white placeholder-green-300 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all duration-200"
-              />
-            </div>
-
-            {/* Quantity */}
-            <div className="lg:col-span-3">
-              <label className="block text-green-100 text-sm font-medium mb-3">
-                Quantity (grams/ml)
-              </label>
-              <input
-                type="text"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleInputChange}
-                placeholder="Enter Quantity"
-                className="w-full bg-green-700/50 border border-green-600 rounded-xl px-4 py-3 text-white placeholder-green-300 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all duration-200"
-              />
-            </div>
-
-            {/* Macronutrients Row 1 */}
-            <div>
-              <label className="block text-green-100 text-sm font-medium mb-3">
-                Calories
-              </label>
-              <input
-                type="number"
-                name="calories"
-                value={formData.calories}
-                onChange={handleInputChange}
-                placeholder="Enter Calories"
-                className="w-full bg-green-700/50 border border-green-600 rounded-xl px-4 py-3 text-white placeholder-green-300 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all duration-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-green-100 text-sm font-medium mb-3">
-                Protein
-              </label>
-              <input
-                type="number"
-                name="protein"
-                value={formData.protein}
-                onChange={handleInputChange}
-                placeholder="Enter Protein"
-                className="w-full bg-green-700/50 border border-green-600 rounded-xl px-4 py-3 text-white placeholder-green-300 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all duration-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-green-100 text-sm font-medium mb-3">
-                Carbs
-              </label>
-              <input
-                type="number"
-                name="carbs"
-                value={formData.carbs}
-                onChange={handleInputChange}
-                placeholder="Enter Carbs"
-                className="w-full bg-green-700/50 border border-green-600 rounded-xl px-4 py-3 text-white placeholder-green-300 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all duration-200"
-              />
-            </div>
-
-            {/* Fat field in new row */}
-            <div>
-              <label className="block text-green-100 text-sm font-medium mb-3">
-                Fat
-              </label>
-              <input
-                type="number"
-                name="fat"
-                value={formData.fat}
-                onChange={handleInputChange}
-                placeholder="Enter Fat"
-                className="w-full bg-green-700/50 border border-green-600 rounded-xl px-4 py-3 text-white placeholder-green-300 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all duration-200"
-              />
-            </div>
-          </div>
-
-          {/* Add Button */}
-          <div className="flex justify-end mt-8">
-            <button
-              onClick={handleAdd}
-              className="bg-lime-400 hover:bg-lime-500 text-green-900 font-semibold px-8 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-green-800"
-            >
-              Add
-            </button>
           </div>
         </div>
 
-        {/* Added Items Section */}
-        <div className="bg-green-800/50 backdrop-blur-sm rounded-2xl border border-green-700/50 overflow-hidden">
-          <div className="p-6 border-b border-green-700/50">
-            <h2 className="text-xl font-semibold text-white">Added Items</h2>
+        {/* Daily Summary */}
+        <DailySummary date={selectedDate} />
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="flex items-center space-x-4">
+            <Filter className="w-5 h-5 text-gray-500" />
+            <select
+              value={mealTypeFilter}
+              onChange={(e) => setMealTypeFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="">All Meals</option>
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Nutrition Entries */}
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Nutrition Entries for {new Date(selectedDate).toLocaleDateString()}
+            </h2>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-green-700/50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-green-100 uppercase tracking-wider">Food Item</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-green-100 uppercase tracking-wider">Quantity</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-green-100 uppercase tracking-wider">Calories</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-green-100 uppercase tracking-wider">Protein</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-green-100 uppercase tracking-wider">Carbs</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-green-100 uppercase tracking-wider">Fat</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-green-100 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-green-700/50">
-                {nutritionEntries.map((entry, index) => (
-                  <tr key={entry.id} className={`${index % 2 === 0 ? 'bg-green-800/20' : 'bg-green-800/40'} hover:bg-green-700/30 transition-colors duration-150`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-white font-medium">{entry.foodItem}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-green-100">{entry.quantity}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-green-100">{entry.calories}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-green-100">{entry.protein}g</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-green-100">{entry.carbs}g</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-green-100">{entry.fat}g</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex space-x-3">
-                        <button className="text-blue-400 hover:text-blue-300 transition-colors duration-150">
-                          <Edit3 size={16} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(entry.id)}
-                          className="text-red-400 hover:text-red-300 transition-colors duration-150"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+          {isEntriesLoading ? (
+            <div className="p-8">
+              <LoadingSpinner text="Loading nutrition entries..." />
+            </div>
+          ) : entriesError ? (
+            <div className="p-8 text-center">
+              <p className="text-red-600">Failed to load nutrition entries. Please try again.</p>
+            </div>
+          ) : nutritionEntries.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500 mb-4">No nutrition entries found for this date.</p>
+              <button
+                onClick={handleAddEntry}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 mx-auto transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Your First Entry</span>
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Food Item
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Meal Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Quantity
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Calories
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Protein
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Carbs
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fat
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {nutritionEntries.length === 0 && (
-            <div className="p-12 text-center">
-              <p className="text-green-300 text-lg">No nutrition entries added yet</p>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {nutritionEntries.map((entry) => (
+                    <tr key={entry._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{entry.foodItem}</div>
+                        {entry.notes && (
+                          <div className="text-sm text-gray-500">{entry.notes}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMealTypeColor(entry.mealType)}`}>
+                          {entry.mealType}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {entry.quantity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {entry.calories}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {entry.protein}g
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {entry.carbs}g
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {entry.fat}g
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatMealTime(entry.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEditEntry(entry)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEntry(entry._id)}
+                            disabled={isDeleting}
+                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
+
+        {/* Modals */}
+        {showAddForm && (
+          <NutritionEntryForm
+            defaultDate={selectedDate}
+            onClose={handleFormClose}
+            onSuccess={handleFormSuccess}
+          />
+        )}
+
+        {editingEntry && (
+          <NutritionEntryForm
+            entry={editingEntry}
+            onClose={handleFormClose}
+            onSuccess={handleFormSuccess}
+          />
+        )}
       </div>
     </div>
   );

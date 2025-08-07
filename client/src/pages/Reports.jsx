@@ -1,306 +1,364 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Download, Calendar, TrendingUp, PieChart } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { Calendar, Download, TrendingUp, BarChart3, Filter, RefreshCw } from 'lucide-react';
+import { useGetNutritionReportsQuery, useGetChartDataQuery } from '../store/api/nutritionApi';
+import { formatDateForAPI } from '../utils/api';
+import NutritionChart, { CaloriesChart, MacroChart, TrendChart } from '../components/charts/NutritionChart';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const Reports = () => {
-  const [selectedMonth, setSelectedMonth] = useState(7); // August (0-indexed)
-  const [selectedYear, setSelectedYear] = useState(2024);
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+  });
+  const [chartType, setChartType] = useState('daily');
+  const [selectedView, setSelectedView] = useState('overview');
 
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  // API queries
+  const {
+    data: reportsData,
+    isLoading: isReportsLoading,
+    error: reportsError,
+    refetch: refetchReports,
+  } = useGetNutritionReportsQuery({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
 
-  // Mock data for charts
-  const macronutrientData = [
-    { date: 'Jul 15', calories: 1650, protein: 120, carbs: 180, fat: 65 },
-    { date: 'Jul 22', calories: 1890, protein: 140, carbs: 220, fat: 75 },
-    { date: 'Jul 29', calories: 1456, protein: 110, carbs: 160, fat: 58 },
-    { date: 'Aug 5', calories: 2100, protein: 165, carbs: 240, fat: 85 },
-    { date: 'Aug 12', calories: 1985, protein: 155, carbs: 225, fat: 78 }
-  ];
+  const {
+    data: chartData,
+    isLoading: isChartLoading,
+    error: chartError,
+    refetch: refetchChart,
+  } = useGetChartDataQuery({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    chartType,
+  });
 
-  const calorieDistributionData = [
-    { name: 'Protein', value: 30, calories: 630, color: '#84cc16' },
-    { name: 'Carbs', value: 40, calories: 840, color: '#22c55e' },
-    { name: 'Fat', value: 30, calories: 630, color: '#16a34a' }
-  ];
-
-  // Mock calendar data
-  const generateCalendarDays = (month, year) => {
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    const days = [];
-
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
-
-    return days;
+  const handleDateRangeChange = (field, value) => {
+    setDateRange(prev => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  const calendarDays = generateCalendarDays(selectedMonth, selectedYear);
-  const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-  // Mock daily summary data
-  const dailySummary = {
-    date: 'August 14, 2024',
-    totalCalories: 2100,
-    protein: 150,
-    carbs: 200,
-    fat: 70
+  const handleRefresh = () => {
+    refetchReports();
+    refetchChart();
   };
 
-  const navigateMonth = (direction) => {
-    if (direction === 'prev') {
-      if (selectedMonth === 0) {
-        setSelectedMonth(11);
-        setSelectedYear(selectedYear - 1);
-      } else {
-        setSelectedMonth(selectedMonth - 1);
-      }
-    } else {
-      if (selectedMonth === 11) {
-        setSelectedMonth(0);
-        setSelectedYear(selectedYear + 1);
-      } else {
-        setSelectedMonth(selectedMonth + 1);
-      }
+  const handleExportData = () => {
+    if (reportsData) {
+      const dataStr = JSON.stringify(reportsData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+      const exportFileDefaultName = `nutrition-report-${dateRange.startDate}-to-${dateRange.endDate}.json`;
+
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
     }
   };
 
-  const isActiveDay = (day) => {
-    const activeDays = [5, 7, 14, 21, 28];
-    return activeDays.includes(day);
+  const formatDateForDisplay = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
+
+  const isLoading = isReportsLoading || isChartLoading;
+  const hasError = reportsError || chartError;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-900 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto w-full">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Reports</h1>
-          <p className="text-sm sm:text-base text-green-200">Track your progress and visualize your nutrition journey.</p>
-        </div>
-
-        {/* Calendar Navigation */}
-        <div className="bg-green-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 border border-green-700/50">
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <button
-              onClick={() => navigateMonth('prev')}
-              className="p-2 text-green-100 hover:text-white hover:bg-green-700/50 rounded-lg transition-all duration-200"
-            >
-              <ChevronLeft size={16} className="sm:w-5 sm:h-5" />
-            </button>
-            
-            <div className="flex flex-col sm:flex-row sm:space-x-8">
-              <div className="text-center">
-                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">{months[selectedMonth]} {selectedYear}</h3>
-              </div>
-              <div className="text-center">
-                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">{months[(selectedMonth + 1) % 12]} {selectedMonth === 11 ? selectedYear + 1 : selectedYear}</h3>
-              </div>
-            </div>
-
-            <button
-              onClick={() => navigateMonth('next')}
-              className="p-2 text-green-100 hover:text-white hover:bg-green-700/50 rounded-lg transition-all duration-200"
-            >
-              <ChevronRight size={16} className="sm:w-5 sm:h-5" />
-            </button>
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
-            {/* Current Month */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
-                {weekDays.map((day, idx) => (
-                  <div key={idx} className="text-center text-green-200 text-xs sm:text-sm font-medium py-2">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                {calendarDays.map((day, index) => (
-                  <div
-                    key={index}
-                    className={`
-                      h-8 sm:h-10 flex items-center justify-center text-xs sm:text-sm rounded-lg cursor-pointer transition-all duration-200
-                      ${day ? (isActiveDay(day) 
-                        ? 'bg-lime-400 text-green-900 font-semibold hover:bg-lime-300' 
-                        : 'text-green-100 hover:bg-green-700/50'
-                      ) : ''}
-                    `}
-                  >
-                    {day}
-                  </div>
-                ))}
-              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Nutrition Reports</h1>
+              <p className="text-gray-600">Analyze your nutrition patterns and track your progress over time</p>
             </div>
-
-            {/* Next Month Preview */}
-            <div>
-              <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
-                {weekDays.map((day, idx) => (
-                  <div key={idx} className="text-center text-green-200 text-xs sm:text-sm font-medium py-2">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                {generateCalendarDays((selectedMonth + 1) % 12, selectedMonth === 11 ? selectedYear + 1 : selectedYear).map((day, index) => (
-                  <div
-                    key={index}
-                    className={`
-                      h-8 sm:h-10 flex items-center justify-center text-xs sm:text-sm rounded-lg cursor-pointer transition-all duration-200
-                      ${day ? (isActiveDay(day) 
-                        ? 'bg-lime-400 text-green-900 font-semibold hover:bg-lime-300' 
-                        : 'text-green-100 hover:bg-green-700/50'
-                      ) : ''}
-                    `}
-                  >
-                    {day}
-                  </div>
-                ))}
-              </div>
+            <div className="mt-4 md:mt-0 flex items-center space-x-4">
+              <button
+                onClick={handleRefresh}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Refresh</span>
+              </button>
+              <button
+                onClick={handleExportData}
+                disabled={!reportsData}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Daily Summary */}
-        <div className="bg-green-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 border border-green-700/50">
-          <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Daily Summary</h2>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Filters and Controls */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Date Range */}
             <div>
-              <h3 className="text-base sm:text-lg font-medium text-green-100 mb-2">{dailySummary.date}</h3>
-              <p className="text-sm sm:text-base text-green-200 flex flex-wrap gap-x-4 gap-y-1">
-                <span>Total Calories: <span className="font-semibold text-white">{dailySummary.totalCalories}</span></span>
-                <span>Protein: <span className="font-semibold text-white">{dailySummary.protein}g</span></span>
-                <span>Carbs: <span className="font-semibold text-white">{dailySummary.carbs}g</span></span>
-                <span>Fat: <span className="font-semibold text-white">{dailySummary.fat}g</span></span>
-              </p>
-            </div>
-            <div className="mt-4 sm:mt-0">
-              <img 
-                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop&crop=center" 
-                alt="Healthy meal"
-                className="w-40 sm:w-48 h-24 sm:h-32 object-cover rounded-lg"
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Chart Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Chart Type
+              </label>
+              <select
+                value={chartType}
+                onChange={(e) => setChartType(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+
+            {/* View Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                View
+              </label>
+              <select
+                value={selectedView}
+                onChange={(e) => setSelectedView(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="overview">Overview</option>
+                <option value="detailed">Detailed</option>
+                <option value="trends">Trends</option>
+              </select>
+            </div>
           </div>
         </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <LoadingSpinner text="Loading nutrition reports..." />
+          </div>
+        )}
+
+        {/* Error State */}
+        {hasError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <p className="text-red-600">Failed to load reports. Please try again.</p>
+          </div>
+        )}
+
+        {/* Summary Statistics */}
+        {reportsData && !isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Avg Daily Calories</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {Math.round(reportsData.averages?.avgCalories || 0)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <BarChart3 className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Avg Daily Protein</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {Math.round(reportsData.averages?.avgProtein || 0)}g
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <BarChart3 className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Avg Daily Carbs</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {Math.round(reportsData.averages?.avgCarbs || 0)}g
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <BarChart3 className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Avg Daily Fat</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {Math.round(reportsData.averages?.avgFat || 0)}g
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 mb-6 sm:mb-8">
-          {/* Macronutrient Intake Over Time */}
-          <div className="bg-green-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-green-700/50">
-            <div className="flex items-center mb-4">
-              <TrendingUp className="text-lime-400 mr-2" size={16} />
-              <h3 className="text-base sm:text-lg font-semibold text-white">Macronutrient Intake Over Time</h3>
-            </div>
-            <div className="mb-4">
-              <p className="text-xl sm:text-2xl font-bold text-white">Average: 1800 kcal</p>
-              <p className="text-sm sm:text-base text-green-200">Last 30 Days <span className="text-lime-400">+5%</span></p>
-            </div>
-            <div className="h-56 sm:h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={macronutrientData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#9ca3af"
-                    fontSize={10}
-                    className="text-xs sm:text-sm"
-                  />
-                  <YAxis stroke="#9ca3af" fontSize={10} className="text-xs sm:text-sm" />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="calories" 
-                    stroke="#84cc16" 
-                    strokeWidth={2}
-                    dot={{ fill: '#84cc16', strokeWidth: 2, r: 3 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+        {chartData && !isLoading && (
+          <div className="space-y-6">
+            {selectedView === 'overview' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <CaloriesChart
+                  data={chartData}
+                  title={`${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Nutrition Trends`}
+                />
+                <MacroChart
+                  data={chartData}
+                  title="Macronutrient Distribution"
+                />
+              </div>
+            )}
 
-          {/* Calorie Distribution */}
-          <div className="bg-green-800/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-green-700/50">
-            <div className="flex items-center mb-4">
-              <PieChart className="text-lime-400 mr-2" size={16} />
-              <h3 className="text-base sm:text-lg font-semibold text-white">Calorie Distribution</h3>
-            </div>
-            <div className="mb-4">
-              <p className="text-xl sm:text-2xl font-bold text-white">Protein: 30%, Carbs: 40%...</p>
-              <p className="text-sm sm:text-base text-green-200">Today <span className="text-red-400">-2%</span></p>
-            </div>
-            <div className="h-56 sm:h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={calorieDistributionData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="#9ca3af"
-                    fontSize={10}
-                    className="text-xs sm:text-sm"
+            {selectedView === 'detailed' && (
+              <div className="space-y-6">
+                <NutritionChart
+                  data={chartData}
+                  type="bar"
+                  title={`Detailed ${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Nutrition`}
+                  height={500}
+                />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <NutritionChart
+                    data={chartData}
+                    type="bar"
+                    title="Protein Intake"
+                    height={300}
                   />
-                  <YAxis stroke="#9ca3af" fontSize={10} className="text-xs sm:text-sm" />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '12px'
-                    }}
+                  <NutritionChart
+                    data={chartData}
+                    type="bar"
+                    title="Carbohydrate Intake"
+                    height={300}
                   />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {calorieDistributionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 flex flex-wrap justify-around gap-2">
-              {calorieDistributionData.map((item, index) => (
-                <div key={index} className="text-center">
-                  <div className="flex items-center justify-center mb-1">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: item.color }}
-                    ></div>
-                    <span className="text-xs sm:text-sm text-green-100">{item.name}</span>
-                  </div>
-                  <p className="text-xs text-green-200">{item.value}%</p>
+                  <NutritionChart
+                    data={chartData}
+                    type="bar"
+                    title="Fat Intake"
+                    height={300}
+                  />
                 </div>
-              ))}
+              </div>
+            )}
+
+            {selectedView === 'trends' && (
+              <div className="space-y-6">
+                <TrendChart
+                  data={chartData}
+                  title={`${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Nutrition Trends`}
+                  height={500}
+                />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <MacroChart
+                    data={chartData}
+                    title="Overall Macronutrient Distribution"
+                  />
+                  <div className="bg-white rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Period Summary</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Date Range:</span>
+                        <span className="font-medium">
+                          {formatDateForDisplay(dateRange.startDate)} - {formatDateForDisplay(dateRange.endDate)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Days:</span>
+                        <span className="font-medium">{reportsData?.dateRange?.dayCount || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Entries:</span>
+                        <span className="font-medium">{reportsData?.totals?.entryCount || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Calories:</span>
+                        <span className="font-medium">{Math.round(reportsData?.totals?.totalCalories || 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Report Details */}
+        {reportsData && !isLoading && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Report Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">
+                  {Math.round(reportsData.totals?.totalCalories || 0)}
+                </p>
+                <p className="text-sm text-gray-600">Total Calories</p>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-red-600">
+                  {Math.round(reportsData.totals?.totalProtein || 0)}g
+                </p>
+                <p className="text-sm text-gray-600">Total Protein</p>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-yellow-600">
+                  {Math.round(reportsData.totals?.totalCarbs || 0)}g
+                </p>
+                <p className="text-sm text-gray-600">Total Carbs</p>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-purple-600">
+                  {Math.round(reportsData.totals?.totalFat || 0)}g
+                </p>
+                <p className="text-sm text-gray-600">Total Fat</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Download Button */}
-        <div className="flex justify-center">
-          <button className="bg-lime-400 hover:bg-lime-500 text-green-900 font-semibold px-6 sm:px-8 py-2 sm:py-3 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-green-800 flex items-center text-sm sm:text-base">
-            <Download className="mr-2" size={16} />
-            Download as PDF
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );
