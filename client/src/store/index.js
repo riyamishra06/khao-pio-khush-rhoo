@@ -39,8 +39,4 @@ export const store = configureStore({
 // Setup listeners for refetchOnFocus/refetchOnReconnect behaviors
 setupListeners(store.dispatch);
 
-// Export types for TypeScript (if needed)
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
-
 export default store;

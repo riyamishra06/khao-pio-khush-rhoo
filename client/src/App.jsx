@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -32,7 +32,6 @@ const App = () => {
   }
 
   return (
-    <BrowserRouter>
       <div className="min-h-screen flex flex-col">
         <Navbar />
 
@@ -138,7 +137,6 @@ const App = () => {
 
         <Footer />
       </div>
-    </BrowserRouter>
   );
 };
 

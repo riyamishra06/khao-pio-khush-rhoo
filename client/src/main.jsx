@@ -5,8 +5,10 @@ import App from './App.jsx';
 import { store } from './store/index.js';
 
 import './index.css';
+import { BrowserRouter } from 'react-router-dom';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
+  <BrowserRouter>
   <Provider store={store}>
     <App />
     <Toaster
@@ -27,4 +29,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       }}
     />
   </Provider>
+  </BrowserRouter>
 );
