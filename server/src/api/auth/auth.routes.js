@@ -10,6 +10,6 @@ router.post("/register/user", userRegister);
 router.post("/register/admin", adminRegister); // For initial setup
 
 // Protected routes
-router.post("/verify", authMiddleware, verify);
+router.get("/verify", authMiddleware, verify);
 
 export default router;

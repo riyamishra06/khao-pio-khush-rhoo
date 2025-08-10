@@ -14,6 +14,7 @@ import Reports from './pages/Reports';
 import MemberShip from './pages/MemberShip';
 
 // Admin pages (we'll create these)
+import AdminAuth from './pages/admin/AdminAuth';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminFoods from './pages/admin/AdminFoods';
@@ -49,6 +50,7 @@ const App = () => {
                 )
               }
             />
+            <Route path="/admin/auth" element={<AdminAuth />} />
 
             {/* User protected routes */}
             <Route

@@ -4,11 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { loginSchema } from '../../utils/validation';
-import SocialLogin from './SocialLogin';
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('user');
   const { login, isLoading } = useAuth();
 
   const {
@@ -21,47 +19,16 @@ const LoginForm = () => {
     defaultValues: {
       email: '',
       password: '',
-      role: 'user',
+      role: 'user', // always user
     },
   });
 
   const onSubmit = async (data) => {
-    await login(data);
-  };
-
-  const handleRoleChange = (role) => {
-    setSelectedRole(role);
-    setValue('role', role);
+    await login({ ...data, role: 'user' }); // force role to user
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-5">
-      {/* Role Selection */}
-      <div className="flex space-x-2 mb-4">
-        <button
-          type="button"
-          onClick={() => handleRoleChange('user')}
-          className={`flex-1 py-2 px-4 rounded text-sm font-medium transition ${
-            selectedRole === 'user'
-              ? 'bg-green-600 text-white'
-              : 'bg-green-900/30 text-green-300 hover:bg-green-900/50'
-          }`}
-        >
-          User Login
-        </button>
-        <button
-          type="button"
-          onClick={() => handleRoleChange('admin')}
-          className={`flex-1 py-2 px-4 rounded text-sm font-medium transition ${
-            selectedRole === 'admin'
-              ? 'bg-green-600 text-white'
-              : 'bg-green-900/30 text-green-300 hover:bg-green-900/50'
-          }`}
-        >
-          Admin Login
-        </button>
-      </div>
-
       {/* Email Input */}
       <div>
         <input
@@ -114,8 +81,6 @@ const LoginForm = () => {
           'Login'
         )}
       </button>
-
-      <SocialLogin />
     </form>
   );
 };

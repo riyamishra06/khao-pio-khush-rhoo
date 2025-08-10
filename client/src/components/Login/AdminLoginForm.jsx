@@ -3,54 +3,36 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { registerSchema } from '../../utils/validation';
+import { loginSchema } from '../../utils/validation';
 
-const RegisterForm = () => {
+const AdminLoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { register: registerUser, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: '',
       email: '',
       password: '',
-      confirmPassword: '',
+      role: 'admin', // always admin
     },
   });
 
   const onSubmit = async (data) => {
-    const { confirmPassword, ...userData } = data;
-    await registerUser({ ...userData, role: 'user' }); // force role to user
+    await login({ ...data, role: 'admin' }); // force role to admin
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-5">
-      {/* Username Input */}
-      <div>
-        <input
-          type="text"
-          placeholder="Username"
-          {...register('username')}
-          className={`w-full px-4 py-2 rounded bg-green-900/50 text-white border placeholder:text-green-400 transition ${
-            errors.username ? 'border-red-500' : 'border-green-600'
-          }`}
-        />
-        {errors.username && (
-          <p className="text-red-400 text-sm mt-1">{errors.username.message}</p>
-        )}
-      </div>
-
       {/* Email Input */}
       <div>
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Admin Email"
           {...register('email')}
           className={`w-full px-4 py-2 rounded bg-green-900/50 text-white border placeholder:text-green-400 transition ${
             errors.email ? 'border-red-500' : 'border-green-600'
@@ -83,28 +65,6 @@ const RegisterForm = () => {
         )}
       </div>
 
-      {/* Confirm Password Input */}
-      <div className="relative">
-        <input
-          type={showConfirmPassword ? 'text' : 'password'}
-          placeholder="Confirm Password"
-          {...register('confirmPassword')}
-          className={`w-full px-4 py-2 pr-10 rounded bg-green-900/50 text-white border placeholder:text-green-400 transition ${
-            errors.confirmPassword ? 'border-red-500' : 'border-green-600'
-          }`}
-        />
-        <button
-          type="button"
-          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-400 hover:text-green-300"
-        >
-          {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-        {errors.confirmPassword && (
-          <p className="text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>
-        )}
-      </div>
-
       {/* Submit Button */}
       <button
         type="submit"
@@ -114,14 +74,14 @@ const RegisterForm = () => {
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            Creating account...
+            Logging in...
           </>
         ) : (
-          'Register'
+          'Login'
         )}
       </button>
     </form>
   );
 };
 
-export default RegisterForm;
+export default AdminLoginForm;

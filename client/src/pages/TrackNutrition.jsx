@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
-import { Plus, Calendar, TrendingUp, Filter } from 'lucide-react';
-import { useGetNutritionEntriesQuery, useDeleteNutritionEntryMutation } from '../store/api/nutritionApi';
-import { formatDateForAPI } from '../utils/api';
-import { toast } from 'react-hot-toast';
-import DailySummary from '../components/nutrition/DailySummary';
-import NutritionEntryForm from '../components/nutrition/NutritionEntryForm';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import React, { useState } from "react";
+import { Plus, Calendar, TrendingUp, Filter } from "lucide-react";
+import {
+  useGetNutritionEntriesQuery,
+  useDeleteNutritionEntryMutation,
+} from "../store/api/nutritionApi";
+import { toast } from "react-hot-toast";
+import DailySummary from "../components/nutrition/DailySummary";
+import NutritionEntryForm from "../components/nutrition/NutritionEntryForm";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const TrackNutrition = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
-  const [mealTypeFilter, setMealTypeFilter] = useState('');
+  const [mealTypeFilter, setMealTypeFilter] = useState("");
 
   // API queries and mutations
   const {
@@ -25,7 +29,8 @@ const TrackNutrition = () => {
     mealType: mealTypeFilter || undefined,
   });
 
-  const [deleteEntry, { isLoading: isDeleting }] = useDeleteNutritionEntryMutation();
+  const [deleteEntry, { isLoading: isDeleting }] =
+    useDeleteNutritionEntryMutation();
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -40,13 +45,15 @@ const TrackNutrition = () => {
   };
 
   const handleDeleteEntry = async (id) => {
-    if (window.confirm('Are you sure you want to delete this nutrition entry?')) {
+    if (
+      window.confirm("Are you sure you want to delete this nutrition entry?")
+    ) {
       try {
         await deleteEntry(id).unwrap();
-        toast.success('Nutrition entry deleted successfully!');
+        toast.success("Nutrition entry deleted successfully!");
         refetchEntries();
       } catch (error) {
-        toast.error('Failed to delete nutrition entry');
+        toast.error("Failed to delete nutrition entry");
       }
     }
   };
@@ -63,20 +70,20 @@ const TrackNutrition = () => {
   };
 
   const formatMealTime = (createdAt) => {
-    return new Date(createdAt).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(createdAt).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getMealTypeColor = (mealType) => {
     const colors = {
-      breakfast: 'bg-yellow-100 text-yellow-800',
-      lunch: 'bg-blue-100 text-blue-800',
-      dinner: 'bg-purple-100 text-purple-800',
-      snack: 'bg-green-100 text-green-800',
+      breakfast: "bg-yellow-100 text-yellow-800",
+      lunch: "bg-blue-100 text-blue-800",
+      dinner: "bg-purple-100 text-purple-800",
+      snack: "bg-green-100 text-green-800",
     };
-    return colors[mealType] || 'bg-gray-100 text-gray-800';
+    return colors[mealType] || "bg-gray-100 text-gray-800";
   };
 
   const nutritionEntries = entriesData?.entries || [];
@@ -88,8 +95,12 @@ const TrackNutrition = () => {
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Nutrition Tracking</h1>
-              <p className="text-gray-600">Track your daily nutrition and monitor your progress</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Nutrition Tracking
+              </h1>
+              <p className="text-gray-600">
+                Track your daily nutrition and monitor your progress
+              </p>
             </div>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
               {/* Date Selector */}
@@ -139,7 +150,8 @@ const TrackNutrition = () => {
         <div className="bg-white rounded-lg shadow-sm">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
-              Nutrition Entries for {new Date(selectedDate).toLocaleDateString()}
+              Nutrition Entries for{" "}
+              {new Date(selectedDate).toLocaleDateString()}
             </h2>
           </div>
 
@@ -149,11 +161,28 @@ const TrackNutrition = () => {
             </div>
           ) : entriesError ? (
             <div className="p-8 text-center">
-              <p className="text-red-600">Failed to load nutrition entries. Please try again.</p>
+              <p className="text-red-600">
+                Failed to load nutrition entries. Please try again.
+              </p>
+              {entriesError.data?.error &&
+                (Array.isArray(entriesError.data.error) ? (
+                  entriesError.data.error.map((err, idx) => (
+                    <div key={idx} className="text-red-500 text-sm">
+                      {err.message}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-red-500 text-sm">
+                    {entriesError.data.error.message ||
+                      JSON.stringify(entriesError.data.error)}
+                  </div>
+                ))}
             </div>
           ) : nutritionEntries.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500 mb-4">No nutrition entries found for this date.</p>
+              <p className="text-gray-500 mb-4">
+                No nutrition entries found for this date.
+              </p>
               <button
                 onClick={handleAddEntry}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 mx-auto transition"
@@ -200,13 +229,21 @@ const TrackNutrition = () => {
                   {nutritionEntries.map((entry) => (
                     <tr key={entry._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{entry.foodItem}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {entry.foodItem}
+                        </div>
                         {entry.notes && (
-                          <div className="text-sm text-gray-500">{entry.notes}</div>
+                          <div className="text-sm text-gray-500">
+                            {entry.notes}
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMealTypeColor(entry.mealType)}`}>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMealTypeColor(
+                            entry.mealType
+                          )}`}
+                        >
                           {entry.mealType}
                         </span>
                       </td>

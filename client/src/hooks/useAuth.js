@@ -1,6 +1,6 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import {
   selectCurrentUser,
   selectCurrentToken,
@@ -11,14 +11,14 @@ import {
   setCredentials,
   logout as logoutAction,
   setLoading,
-} from '../store/slices/authSlice';
+} from "../store/slices/authSlice";
 import {
   useLoginUserMutation,
   useRegisterUserMutation,
   useRegisterAdminMutation,
   useVerifyTokenQuery,
-} from '../store/api/authApi';
-import { formatErrorMessage, SUCCESS_MESSAGES } from '../utils/api';
+} from "../store/api/authApi";
+import { formatErrorMessage, SUCCESS_MESSAGES } from "../utils/api";
 
 export const useAuth = () => {
   const dispatch = useDispatch();
@@ -38,10 +38,10 @@ export const useAuth = () => {
   const [registerAdmin, { isLoading: isRegisterAdminLoading }] = useRegisterAdminMutation();
 
   // Verify token query (only run if token exists)
-  const { 
-    data: verifyData, 
+  const {
+    data: verifyData,
     isLoading: isVerifyLoading,
-    error: verifyError 
+    error: verifyError,
   } = useVerifyTokenQuery(undefined, {
     skip: !token,
   });
@@ -51,25 +51,28 @@ export const useAuth = () => {
     try {
       dispatch(setLoading(true));
       const result = await loginUser(credentials).unwrap();
-      
-      // Extract user data from the response
-      const userData = result.user || result.admin || {
-        email: credentials.email,
-        role: credentials.role,
-      };
 
-      dispatch(setCredentials({
-        token: result.token,
-        user: userData,
-      }));
+      // Extract user data from the response
+      const userData = result.user ||
+        result.admin || {
+          email: credentials.email,
+          role: credentials.role,
+        };
+
+      dispatch(
+        setCredentials({
+          token: result.token,
+          user: userData,
+        })
+      );
 
       toast.success(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-      
-      // Navigate based on role
-      if (credentials.role === 'admin') {
-        navigate('/admin/dashboard');
+
+      // Navigate based on role from backend response
+      if (userData.role === "admin") {
+        navigate("/admin/dashboard");
       } else {
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
 
       return { success: true };
@@ -86,29 +89,32 @@ export const useAuth = () => {
   const register = async (userData, isAdminRegistration = false) => {
     try {
       dispatch(setLoading(true));
-      
+
       const mutation = isAdminRegistration ? registerAdmin : registerUser;
       const result = await mutation(userData).unwrap();
-      
-      // Extract user data from the response
-      const userInfo = result.user || result.admin || {
-        email: userData.email,
-        username: userData.username,
-        role: userData.role || 'user',
-      };
 
-      dispatch(setCredentials({
-        token: result.token,
-        user: userInfo,
-      }));
+      // Extract user data from the response
+      const userInfo = result.user ||
+        result.admin || {
+          email: userData.email,
+          username: userData.username,
+          role: userData.role || "user",
+        };
+
+      dispatch(
+        setCredentials({
+          token: result.token,
+          user: userInfo,
+        })
+      );
 
       toast.success(SUCCESS_MESSAGES.REGISTER_SUCCESS);
-      
-      // Navigate based on role
-      if (isAdminRegistration || userData.role === 'admin') {
-        navigate('/admin/dashboard');
+
+      // Navigate based on role from backend response
+      if (userInfo.role === "admin") {
+        navigate("/admin/dashboard");
       } else {
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
 
       return { success: true };
@@ -125,7 +131,7 @@ export const useAuth = () => {
   const logout = () => {
     dispatch(logoutAction());
     toast.success(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
-    navigate('/');
+    navigate("/");
   };
 
   // Check if user has specific role
@@ -148,20 +154,25 @@ export const useAuth = () => {
     user,
     token,
     isAuthenticated,
-    isLoading: isLoading || isLoginLoading || isRegisterLoading || isRegisterAdminLoading || isVerifyLoading,
+    isLoading:
+      isLoading ||
+      isLoginLoading ||
+      isRegisterLoading ||
+      isRegisterAdminLoading ||
+      isVerifyLoading,
     userRole,
     isAdmin,
-    
+
     // Actions
     login,
     register,
     logout,
-    
+
     // Utilities
     hasRole,
     hasAnyRole,
     isAuthorized,
-    
+
     // Verification
     verifyData,
     verifyError,

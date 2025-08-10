@@ -5,10 +5,10 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { registerSchema } from '../../utils/validation';
 
-const RegisterForm = () => {
+const AdminRegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { register: registerUser, isLoading } = useAuth();
+  const { register: registerAdmin, isLoading } = useAuth();
 
   const {
     register,
@@ -21,13 +21,14 @@ const RegisterForm = () => {
       email: '',
       password: '',
       confirmPassword: '',
+      role: 'admin',
     },
   });
 
-  const onSubmit = async (data) => {
-    const { confirmPassword, ...userData } = data;
-    await registerUser({ ...userData, role: 'user' }); // force role to user
-  };
+const onSubmit = async (data) => {
+  const { confirmPassword, ...adminData } = data;
+  await registerAdmin(adminData, true); // Pass true to indicate admin registration
+};
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-5">
@@ -35,7 +36,7 @@ const RegisterForm = () => {
       <div>
         <input
           type="text"
-          placeholder="Username"
+          placeholder="Admin Username"
           {...register('username')}
           className={`w-full px-4 py-2 rounded bg-green-900/50 text-white border placeholder:text-green-400 transition ${
             errors.username ? 'border-red-500' : 'border-green-600'
@@ -45,12 +46,11 @@ const RegisterForm = () => {
           <p className="text-red-400 text-sm mt-1">{errors.username.message}</p>
         )}
       </div>
-
       {/* Email Input */}
       <div>
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Admin Email"
           {...register('email')}
           className={`w-full px-4 py-2 rounded bg-green-900/50 text-white border placeholder:text-green-400 transition ${
             errors.email ? 'border-red-500' : 'border-green-600'
@@ -60,7 +60,6 @@ const RegisterForm = () => {
           <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
         )}
       </div>
-
       {/* Password Input */}
       <div className="relative">
         <input
@@ -82,7 +81,6 @@ const RegisterForm = () => {
           <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>
         )}
       </div>
-
       {/* Confirm Password Input */}
       <div className="relative">
         <input
@@ -104,7 +102,6 @@ const RegisterForm = () => {
           <p className="text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>
         )}
       </div>
-
       {/* Submit Button */}
       <button
         type="submit"
@@ -114,7 +111,7 @@ const RegisterForm = () => {
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            Creating account...
+            Registering...
           </>
         ) : (
           'Register'
@@ -124,4 +121,4 @@ const RegisterForm = () => {
   );
 };
 
-export default RegisterForm;
+export default AdminRegisterForm;

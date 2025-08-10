@@ -109,7 +109,7 @@ const adminRegister = async (data) => {
       username: data.username,
       email: data.email,
       password: data.password,
-      role: data.role || "admin",
+      role: "admin",
       permissions: data.permissions || ["manage_users", "manage_foods", "view_analytics"]
     });
 
